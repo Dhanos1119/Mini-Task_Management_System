@@ -18,15 +18,15 @@ const [sort, setSort] = useState("DEFAULT");
 const [page, setPage] = useState(1);
 const tasksPerPage = 5;
 
-
-/* CREATE TASK STATES */
-
 const [showCreate,setShowCreate] = useState(false)
 const [title,setTitle] = useState("")
 const [description,setDescription] = useState("")
 const [priority,setPriority] = useState("MEDIUM")
 const [dueDate,setDueDate] = useState("")
 
+/* ========================= */
+/* AUTH CHECK + AUTO REFRESH */
+/* ========================= */
 
 useEffect(()=>{
 
@@ -38,11 +38,18 @@ router.push("/login");
 return;
 }
 
-fetchTasks();
+fetchTasks()
+
+// 🔥 auto refresh every 5 seconds
+const interval = setInterval(fetchTasks,5000)
+
+return ()=> clearInterval(interval)
 
 },[])
 
-
+/* ========================= */
+/* FETCH TASKS */
+/* ========================= */
 
 const fetchTasks = async()=>{
 
@@ -63,6 +70,8 @@ Authorization:`Bearer ${token}`
 
 const data = await res.json()
 
+console.log("Fetched tasks:", data)
+
 if(Array.isArray(data)){
 setTasks(data)
 }else{
@@ -79,9 +88,9 @@ setLoading(false)
 
 }
 
-
-
+/* ========================= */
 /* CREATE TASK */
+/* ========================= */
 
 const createTask = async()=>{
 
@@ -122,7 +131,9 @@ console.error(error)
 
 }
 
-
+/* ========================= */
+/* COMPLETE TASK */
+/* ========================= */
 
 const completeTask = async(id:number)=>{
 
@@ -145,7 +156,9 @@ console.error(error)
 
 }
 
-
+/* ========================= */
+/* DELETE TASK */
+/* ========================= */
 
 const deleteTask = async(id:number)=>{
 
@@ -168,31 +181,30 @@ console.error(error)
 
 }
 
-
-
 const logout = ()=>{
 localStorage.clear()
 router.push("/login")
 }
 
+/* ========================= */
+/* FILTERS */
+/* ========================= */
 
+let filteredTasks = tasks
 
-let filteredTasks = tasks.filter(task =>
+if(search){
+filteredTasks = filteredTasks.filter(task =>
 task.title?.toLowerCase().includes(search.toLowerCase())
 )
-
-
+}
 
 if(statusFilter !== "ALL"){
 filteredTasks = filteredTasks.filter(task => task.status === statusFilter)
 }
 
-
 if(priorityFilter !== "ALL"){
 filteredTasks = filteredTasks.filter(task => task.priority === priorityFilter)
 }
-
-
 
 if(sort === "DUE_DATE"){
 
@@ -206,8 +218,6 @@ return dateA - dateB
 })
 
 }
-
-
 
 if(sort === "PRIORITY"){
 
@@ -225,15 +235,15 @@ return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4)
 
 }
 
-
+/* ========================= */
+/* PAGINATION */
+/* ========================= */
 
 const indexOfLast = page * tasksPerPage
 const indexOfFirst = indexOfLast - tasksPerPage
 
 const currentTasks = filteredTasks.slice(indexOfFirst,indexOfLast)
 const totalPages = Math.ceil(filteredTasks.length / tasksPerPage)
-
-
 
 return(
 
@@ -248,6 +258,13 @@ User Dashboard
 </h1>
 
 <div className="flex gap-4">
+
+<button
+onClick={fetchTasks}
+className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-lg font-semibold"
+>
+Refresh
+</button>
 
 <button
 onClick={()=>setShowCreate(true)}
@@ -267,157 +284,11 @@ Logout
 
 </div>
 
-
-
 <div className="max-w-6xl mx-auto p-10">
 
 <h2 className="text-2xl font-semibold mb-8">
 My Tasks
 </h2>
-
-
-
-{/* CREATE TASK FORM */}
-
-{showCreate && (
-
-<div className="bg-slate-800 p-6 rounded-xl mb-8">
-
-<input
-placeholder="Task Title"
-className="w-full mb-3 p-2 text-white bg-slate-700 rounded"
-value={title}
-onChange={(e)=>setTitle(e.target.value)}
-/>
-
-<textarea
-placeholder="Description"
-className="w-full mb-3 p-2 text-white bg-slate-700 rounded"
-value={description}
-onChange={(e)=>setDescription(e.target.value)}
-/>
-
-<select
-className="w-full mb-3 p-2 text-white bg-slate-700 rounded"
-value={priority}
-onChange={(e)=>setPriority(e.target.value)}
->
-<option value="HIGH">HIGH</option>
-<option value="MEDIUM">MEDIUM</option>
-<option value="LOW">LOW</option>
-</select>
-
-<input
-type="date"
-className="w-full mb-3 p-2 text-white bg-slate-700 rounded"
-value={dueDate}
-onChange={(e)=>setDueDate(e.target.value)}
-/>
-
-<div className="flex gap-3">
-
-<button
-onClick={createTask}
-className="bg-green-600 px-4 py-2 rounded"
->
-Save Task
-</button>
-
-<button
-onClick={()=>setShowCreate(false)}
-className="bg-gray-500 px-4 py-2 rounded"
->
-Cancel
-</button>
-
-</div>
-
-</div>
-
-)}
-
-
-
-{/* FILTERS */}
-
-<div className="flex flex-wrap gap-4 mb-8">
-
-<input
-placeholder="Search task..."
-className="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg"
-onChange={(e)=>{
-setSearch(e.target.value)
-setPage(1)
-}}
-/>
-
-<select
-className="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg"
-onChange={(e)=>{
-setStatusFilter(e.target.value)
-setPage(1)
-}}
->
-
-<option value="ALL">All Status</option>
-<option value="TODO">TODO</option>
-<option value="IN_PROGRESS">IN_PROGRESS</option>
-<option value="DONE">DONE</option>
-
-</select>
-
-
-
-<select
-className="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg"
-onChange={(e)=>{
-setPriorityFilter(e.target.value)
-setPage(1)
-}}
->
-
-<option value="ALL">All Priority</option>
-<option value="HIGH">HIGH</option>
-<option value="MEDIUM">MEDIUM</option>
-<option value="LOW">LOW</option>
-
-</select>
-
-
-
-<select
-className="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg"
-onChange={(e)=>{
-setSort(e.target.value)
-setPage(1)
-}}
->
-
-<option value="DEFAULT">Default</option>
-<option value="DUE_DATE">Sort by Due Date</option>
-<option value="PRIORITY">Sort by Priority</option>
-
-</select>
-
-</div>
-
-
-
-{loading && (
-<p className="text-gray-400">
-Loading tasks...
-</p>
-)}
-
-
-
-{!loading && currentTasks.length === 0 && (
-<p className="text-gray-400">
-No tasks found
-</p>
-)}
-
-
 
 {/* TASK LIST */}
 
@@ -427,7 +298,7 @@ No tasks found
 
 <div
 key={task.id}
-className="bg-slate-800 border border-slate-700 text-white rounded-xl p-6 shadow hover:shadow-lg transition"
+className="bg-slate-800 border border-slate-700 text-white rounded-xl p-6"
 >
 
 <h3 className="text-xl font-bold">
@@ -438,39 +309,25 @@ className="bg-slate-800 border border-slate-700 text-white rounded-xl p-6 shadow
 {task.description}
 </p>
 
-
-<div className="mt-4 text-sm">
-
-<p>
-Priority :
-<span className="ml-2 font-semibold text-yellow-400">
-{task.priority}
-</span>
+<p className="text-sm mt-3">
+Priority : <span className="text-yellow-400">{task.priority}</span>
 </p>
 
-<p>
-Due Date :
-<span className="ml-2">
-{task.dueDate
-? new Date(task.dueDate).toLocaleDateString()
-: "N/A"}
-</span>
+<p className="text-sm">
+Due Date : {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "N/A"}
 </p>
 
-</div>
-
-
+<p className="text-xs text-gray-400 mt-2">
+Assigned by : {task.createdBy}
+</p>
 
 <div className="mt-4">
 
-<span
-className="px-3 py-1 rounded text-sm font-semibold bg-black text-white"
->
+<span className="px-3 py-1 bg-black rounded text-sm">
 {task.status}
 </span>
+
 </div>
-
-
 
 <div className="flex gap-3 mt-6">
 
@@ -478,7 +335,7 @@ className="px-3 py-1 rounded text-sm font-semibold bg-black text-white"
 
 <button
 onClick={()=>completeTask(task.id)}
-className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded"
+className="bg-green-500 px-4 py-2 rounded"
 >
 Complete
 </button>
@@ -486,15 +343,8 @@ Complete
 )}
 
 <button
-onClick={()=>router.push(`/user/edit-task/${task.id}`)}
-className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
->
-Edit
-</button>
-
-<button
 onClick={()=>deleteTask(task.id)}
-className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"
+className="bg-red-500 px-4 py-2 rounded"
 >
 Delete
 </button>
@@ -507,8 +357,6 @@ Delete
 
 </div>
 
-
-
 {/* PAGINATION */}
 
 <div className="flex gap-2 mt-10">
@@ -518,14 +366,9 @@ Delete
 <button
 key={index}
 onClick={()=>setPage(index+1)}
-className={`px-4 py-2 rounded
-
-${page === index+1
-? "bg-blue-500"
-: "bg-slate-700 hover:bg-slate-600"
-}
-
-`}
+className={`px-4 py-2 rounded ${
+page === index+1 ? "bg-blue-500" : "bg-slate-700"
+}`}
 >
 
 {index+1}
@@ -535,7 +378,6 @@ ${page === index+1
 ))}
 
 </div>
-
 
 </div>
 

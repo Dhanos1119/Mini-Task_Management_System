@@ -37,7 +37,7 @@ public class TaskService {
     }
 
     // ===============================
-    // CREATE TASK
+    // CREATE TASK (USER CREATE)
     // ===============================
     public Task createTask(Task task) {
 
@@ -48,9 +48,6 @@ public class TaskService {
         if (task.getPriority() == null || task.getPriority().isEmpty()) {
             task.setPriority("MEDIUM");
         }
-
-        System.out.println("CREATE TASK -> Priority: " + task.getPriority());
-        System.out.println("CREATE TASK -> DueDate: " + task.getDueDate());
 
         return taskRepository.save(task);
     }
@@ -80,26 +77,27 @@ public class TaskService {
     }
 
     // ===============================
-    // ASSIGN TASK (ADMIN)
+    // ADMIN ASSIGN TASK
     // ===============================
-public Task assignTask(AssignTaskRequest request, User admin) {
+    public Task assignTask(AssignTaskRequest request, User admin) {
 
-    User assignedUser = userRepository.findById(request.getUserId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        // find user to assign
+        User assignedUser = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    Task task = new Task();
+        Task task = new Task();
 
-    task.setTitle(request.getTitle());
-    task.setDescription(request.getDescription());
-    task.setStatus(request.getStatus());
-    task.setPriority(request.getPriority());
-    task.setDueDate(request.getDueDate());
+        task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
+        task.setStatus(request.getStatus());
+        task.setPriority(request.getPriority());
+        task.setDueDate(request.getDueDate());
 
-    // 🔥 creator = admin
-    task.setUser(admin);
+        // 🔥 assign to selected user
+        task.setUser(assignedUser);
 
-    return taskRepository.save(task);
-}
+        return taskRepository.save(task);
+    }
 
     // ===============================
     // GET TASKS BY USER
