@@ -21,22 +21,43 @@ public class TaskService {
         this.userRepository = userRepository;
     }
 
-    // GET all tasks
+    // ===============================
+    // GET ALL TASKS
+    // ===============================
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
 
-    // GET task by ID
+    // ===============================
+    // GET TASK BY ID
+    // ===============================
     public Task getTaskById(Long id) {
-        return taskRepository.findById(id).orElse(null);
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
-    // CREATE task
+    // ===============================
+    // CREATE TASK
+    // ===============================
     public Task createTask(Task task) {
+
+        if (task.getStatus() == null || task.getStatus().isEmpty()) {
+            task.setStatus("TODO");
+        }
+
+        if (task.getPriority() == null || task.getPriority().isEmpty()) {
+            task.setPriority("MEDIUM");
+        }
+
+        System.out.println("CREATE TASK -> Priority: " + task.getPriority());
+        System.out.println("CREATE TASK -> DueDate: " + task.getDueDate());
+
         return taskRepository.save(task);
     }
 
-    // UPDATE task
+    // ===============================
+    // UPDATE TASK
+    // ===============================
     public Task updateTask(Long id, Task updatedTask) {
 
         Task task = taskRepository.findById(id)
@@ -45,31 +66,44 @@ public class TaskService {
         task.setTitle(updatedTask.getTitle());
         task.setDescription(updatedTask.getDescription());
         task.setStatus(updatedTask.getStatus());
+        task.setPriority(updatedTask.getPriority());
+        task.setDueDate(updatedTask.getDueDate());
 
         return taskRepository.save(task);
     }
 
-    // DELETE task
+    // ===============================
+    // DELETE TASK
+    // ===============================
     public void deleteTask(Long id) {
         taskRepository.deleteById(id);
     }
 
-    // ASSIGN TASK TO USER
-    public Task assignTask(AssignTaskRequest request) {
+    // ===============================
+    // ASSIGN TASK (ADMIN)
+    // ===============================
+public Task assignTask(AssignTaskRequest request, User admin) {
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    User assignedUser = userRepository.findById(request.getUserId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Task task = new Task();
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
-        task.setStatus(request.getStatus());
-        task.setUser(user);
+    Task task = new Task();
 
-        return taskRepository.save(task);
-    }
+    task.setTitle(request.getTitle());
+    task.setDescription(request.getDescription());
+    task.setStatus(request.getStatus());
+    task.setPriority(request.getPriority());
+    task.setDueDate(request.getDueDate());
 
+    // 🔥 creator = admin
+    task.setUser(admin);
+
+    return taskRepository.save(task);
+}
+
+    // ===============================
     // GET TASKS BY USER
+    // ===============================
     public List<Task> getTasksByUser(Long userId) {
 
         User user = userRepository.findById(userId)
@@ -77,6 +111,4 @@ public class TaskService {
 
         return taskRepository.findByUser(user);
     }
-
-
 }
