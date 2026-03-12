@@ -1,10 +1,19 @@
 package com.taskmanager.backend.dto;
 
+import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class AssignTaskRequest {
 
     private String title;
     private String description;
     private String status;
+    private String priority;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dueDate;
+
     private Long userId;
 
     public AssignTaskRequest() {}
@@ -31,6 +40,22 @@ public class AssignTaskRequest {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 
     public Long getUserId() {
