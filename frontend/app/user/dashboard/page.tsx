@@ -97,8 +97,9 @@ const createTask = async()=>{
 try{
 
 const token = localStorage.getItem("token")
+const userId = localStorage.getItem("userId")
 
-await fetch("http://localhost:8080/tasks",{
+const res = await fetch("http://localhost:8080/tasks",{
 
 method:"POST",
 
@@ -112,18 +113,26 @@ title,
 description,
 priority,
 dueDate,
-status:"TODO"
+status:"TODO",
+userId // 🔥 MUST
 })
 
 })
 
+if(!res.ok){
+console.error("Create failed")
+return;
+}
+
+// 🔥 IMPORTANT CHANGE
+await fetchTasks()   
+
+// reset form AFTER fetch
 setShowCreate(false)
 setTitle("")
 setDescription("")
 setPriority("MEDIUM")
 setDueDate("")
-
-fetchTasks()
 
 }catch(error){
 console.error(error)
@@ -285,10 +294,101 @@ Logout
 </div>
 
 <div className="max-w-6xl mx-auto p-10">
+{/* CREATE TASK FORM */}
 
+{showCreate && (
+
+<div className="bg-slate-800 p-6 rounded mb-6">
+
+<input
+placeholder="Title"
+value={title}
+onChange={(e)=>setTitle(e.target.value)}
+className="block mb-3 p-2 w-full text-black"
+/>
+
+<input
+placeholder="Description"
+value={description}
+onChange={(e)=>setDescription(e.target.value)}
+className="block mb-3 p-2 w-full text-black"
+/>
+
+<input
+type="date"
+value={dueDate}
+onChange={(e)=>setDueDate(e.target.value)}
+className="block mb-3 p-2 w-full text-black"
+/>
+
+<select
+value={priority}
+onChange={(e)=>setPriority(e.target.value)}
+className="block mb-3 p-2 w-full text-black"
+>
+<option value="HIGH">HIGH</option>
+<option value="MEDIUM">MEDIUM</option>
+<option value="LOW">LOW</option>
+</select>
+
+<button
+onClick={createTask}
+className="bg-blue-500 px-4 py-2 rounded"
+>
+Create
+</button>
+
+</div>
+
+)}
 <h2 className="text-2xl font-semibold mb-8">
 My Tasks
 </h2>
+{/* PRIORITY FILTER */}
+
+<div className="flex gap-3 mb-6">
+
+<button
+onClick={()=>{
+  setPriorityFilter("ALL")
+  setPage(1)
+}}
+className="px-4 py-2 bg-gray-600 rounded"
+>
+ALL
+</button>
+
+<button
+onClick={()=>{
+  setPriorityFilter("HIGH")
+  setPage(1)
+}}
+className="px-4 py-2 bg-red-500 rounded"
+>
+HIGH
+</button>
+
+<button
+onClick={()=>{
+  setPriorityFilter("MEDIUM")
+  setPage(1)
+}}
+className="px-4 py-2 bg-yellow-500 rounded"
+>
+MEDIUM
+</button>
+
+<button
+onClick={()=>{
+  setPriorityFilter("LOW")
+  setPage(1)
+}}
+className="px-4 py-2 bg-green-500 rounded"
+>
+LOW
+</button>
+
+</div>
 
 {/* TASK LIST */}
 
